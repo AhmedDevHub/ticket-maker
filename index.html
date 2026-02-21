@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Call Log Maker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>Call Log Maker</h1>
+      <p>Create and print simple call log entries for Salesforce.</p>
+    </header>
+
+    <main class="app-main">
+      <section class="panel panel-form">
+        <h2>Call details</h2>
+        <form id="ticket-form">
+          <div class="form-grid">
+            <label class="field field-required">
+              <span>Customer name</span>
+              <input type="text" id="customer-name" required placeholder="Customer name" />
+            </label>
+
+            <label class="field field-required">
+              <span>Customer phone</span>
+              <input type="tel" id="customer-phone" required placeholder="e.g. 0501234567" inputmode="numeric" pattern="[0-9]+" title="Numbers only (no spaces or symbols)" />
+            </label>
+
+            <label class="field field-required">
+              <span>Call status</span>
+              <select id="call-status" required>
+                <option value="">Select status</option>
+                <option value="Dropped">Dropped</option>
+                <option value="Connected">Connected</option>
+                <option value="Not connected">Not connected</option>
+                <option value="Call back requested">Ask for call back</option>
+                <option value="Contacted on WhatsApp">Contacted on WhatsApp</option>
+              </select>
+            </label>
+
+            <label class="field field-required">
+              <span>Activation</span>
+              <select id="activation-status" required>
+                <option value="">Select</option>
+                <option value="Done">Done</option>
+                <option value="Not done">Not done</option>
+              </select>
+            </label>
+
+            <label class="field field-required">
+              <span>Shipping status</span>
+              <select id="shipping-status" required>
+                <option value="">Select</option>
+                <option value="In Progress">In Progress</option>
+                <option value="With Samsa">With Samsa</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Delayed by PS">Delayed by PS</option>
+                <option value="Pending by customer">Pending by customer</option>
+                <option value="Not started yet">Not started yet</option>
+                <option value="No line item/ No HW to be shipped.">No line item/ No HW to be shipped.</option>
+                <option value="With SMSA">With SMSA</option>
+                <option value="Not yet delivered">Not yet delivered</option>
+              </select>
+            </label>
+
+            <label class="field field-required" id="shipping-sla-field">
+              <span>Shipping SLA</span>
+              <select id="shipping-sla">
+                <option value="">Select SLA</option>
+                <option value="1 WD">1 WD</option>
+                <option value="3 WD">3 WD</option>
+              </select>
+            </label>
+
+            <label class="field field-required">
+              <span>Menu</span>
+              <select id="menu-status" required>
+                <option value="">Select</option>
+                <option value="Not started yet">Not started yet</option>
+                <option value="Template is shared - to be filled by the client">Template is shared - to be filled by the client</option>
+                <option value="Template is received - to be uploaded">Template is received - to be uploaded</option>
+                <option value="Menu is Uploaded">Menu is Uploaded</option>
+                <option value="The client rejected - They will upload it">The client rejected - They will upload it</option>
+                <option value="Pending by customer">Pending by customer</option>
+                <option value="Completed by Customer">Completed by Customer</option>
+                <option value="Not Line Item">Not Line Item</option>
+              </select>
+            </label>
+
+            <label class="field field-required">
+              <span>Installation</span>
+              <select id="installation-status" required>
+                <option value="">Select</option>
+                <option value="Not started yet">Not started yet</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Pending by customer">Pending by customer</option>
+                <option value="Delayed by PS team - PS didn't show up.">Delayed by PS team - PS didn't show up.</option>
+                <option value="Completed by Customer">Completed by Customer</option>
+                <option value="Done - Completed">Done - Completed</option>
+                <option value="Not needed">Not needed</option>
+                <option value="Not line item">Not line item</option>
+              </select>
+            </label>
+
+            <label class="field field-required">
+              <span>Training</span>
+              <select id="training-status" required>
+                <option value="">Select</option>
+                <option value="Not started yet">Not started yet</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Delayed by the training team - Trainer didn't show up.">Delayed by the training team - Trainer didn't show up.</option>
+                <option value="Pending by customer">Pending by customer</option>
+                <option value="Done - Completed">Done - Completed</option>
+                <option value="Not needed">Not needed</option>
+                <option value="Not line item">Not line item</option>
+              </select>
+            </label>
+
+            <label class="field field-full">
+              <span>Free comment</span>
+              <textarea id="free-comment" rows="3" placeholder="Optional notes..."></textarea>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn primary">Add log entry</button>
+            <button type="button" id="clear-btn" class="btn ghost">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel panel-tickets">
+        <div class="panel-header">
+          <h2>Logs output</h2>
+          <button type="button" id="copy-btn" class="btn secondary" disabled>Copy all</button>
+        </div>
+        <div class="output-wrapper">
+          <textarea
+            id="output-text"
+            readonly
+            placeholder="Call log entries will appear here in text so you can copy them into Salesforce.">
+          </textarea>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>© by Ahmed Ashraf. All rights reserved.</span>
+      </footer>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
+

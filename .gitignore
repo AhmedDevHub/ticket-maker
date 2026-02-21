@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment (for future API keys / DB URLs)
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
+# Build / deploy (if you add a build step later)
+dist/
+build/
