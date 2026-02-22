@@ -47,6 +47,26 @@
               </select>
             </label>
 
+            <label class="field" id="whatsapp-ticket-field" style="display: none;">
+              <span>WhatsApp ticket number</span>
+              <input type="text" id="whatsapp-ticket" placeholder="Enter ticket number (optional)" />
+            </label>
+
+            <label class="field" id="follow-up-field" style="display: none;">
+              <span>Next follow-up</span>
+              <input type="datetime-local" id="follow-up-datetime" />
+            </label>
+
+            <label class="field" id="follow-up-notes-field" style="display: none;">
+              <span>Follow-up notes</span>
+              <input type="text" id="follow-up-notes" placeholder="Enter follow-up details (optional)" />
+            </label>
+
+            <label class="field" id="next-follow-up-field" style="display: none;">
+              <span>Next follow up</span>
+              <input type="text" id="next-follow-up" placeholder="Enter next follow-up details (optional)" />
+            </label>
+
             <label class="field field-required">
               <span>Activation</span>
               <select id="activation-status" required>
@@ -126,10 +146,19 @@
             </label>
 
             <label class="field field-full">
+              <span>Next follow up</span>
+              <input type="datetime-local" id="standalone-next-follow-up" />
+            </label>
+          </div>
+
+          <div class="form-grid">
+            <label class="field field-full">
               <span>Free comment</span>
               <textarea id="free-comment" rows="3" placeholder="Optional notes..."></textarea>
             </label>
           </div>
+
+          <div class="form-grid">
 
           <div class="actions">
             <button type="submit" class="btn primary">Add log entry</button>

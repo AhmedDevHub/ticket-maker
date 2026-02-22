@@ -79,6 +79,16 @@ function buildLogLine(data) {
     parts.push(`Installation: ${data.installationStatus || 'Not set'}`);
   if (!shouldExcludeFromOutput(data.trainingStatus))
     parts.push(`Training: ${data.trainingStatus || 'Not set'}`);
+  if (data.whatsappTicket)
+    parts.push(`WhatsApp Ticket: ${data.whatsappTicket}`);
+  if (data.followUpDateTime)
+    parts.push(`Next Follow-up: ${data.followUpDateTime}`);
+  if (data.followUpNotes)
+    parts.push(`Follow-up Notes: ${data.followUpNotes}`);
+  if (data.nextFollowUp)
+    parts.push(`Next Follow up: ${data.nextFollowUp}`);
+  if (data.standaloneNextFollowUp)
+    parts.push(`Next Follow up: ${data.standaloneNextFollowUp}`);
   const comment = (data.freeComment || '').trim();
   if (comment) parts.push(`Comment: ${comment}`);
   return parts.join('\n');
@@ -94,6 +104,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const clearBtn = document.getElementById('clear-btn');
   const shippingStatusInput = document.getElementById('shipping-status');
   const shippingSlaField = document.getElementById('shipping-sla-field');
+  const callStatusInput = document.getElementById('call-status');
+  const whatsappTicketField = document.getElementById('whatsapp-ticket-field');
+  const followUpField = document.getElementById('follow-up-field');
+  const followUpNotesField = document.getElementById('follow-up-notes-field');
+  const nextFollowUpField = document.getElementById('next-follow-up-field');
   const logs = [];
 
   if (!form || !outputText || !copyBtn || !clearBtn) return;
@@ -104,20 +119,56 @@ window.addEventListener('DOMContentLoaded', () => {
       shippingStatusInput.value === SHIPPING_NOT_YET_DELIVERED ? '' : 'none';
   }
 
+  function updateConditionalFields() {
+    if (!callStatusInput) return;
+    const callStatus = callStatusInput.value;
+    
+    // Show WhatsApp ticket field when "Contacted on WhatsApp" is selected
+    if (whatsappTicketField) {
+      whatsappTicketField.style.display = 
+        callStatus === 'Contacted on WhatsApp' ? '' : 'none';
+    }
+    
+    // Show follow-up date/time field for "Call back requested" and "Contacted on WhatsApp"
+    if (followUpField) {
+      followUpField.style.display = 
+        (callStatus === 'Call back requested' || callStatus === 'Contacted on WhatsApp') ? '' : 'none';
+    }
+
+    // Show follow-up notes field for "Call back requested" and "Contacted on WhatsApp"
+    if (followUpNotesField) {
+      followUpNotesField.style.display = 
+        (callStatus === 'Call back requested' || callStatus === 'Contacted on WhatsApp') ? '' : 'none';
+    }
+
+    // Show next follow-up field for "Call back requested" and "Contacted on WhatsApp"
+    if (nextFollowUpField) {
+      nextFollowUpField.style.display = 
+        (callStatus === 'Call back requested' || callStatus === 'Contacted on WhatsApp') ? '' : 'none';
+    }
+  }
+
   if (shippingStatusInput) {
     shippingStatusInput.addEventListener('change', updateSlaVisibility);
     updateSlaVisibility();
+  }
+
+  if (callStatusInput) {
+    callStatusInput.addEventListener('change', updateConditionalFields);
+    updateConditionalFields();
   }
 
   clearBtn.addEventListener('click', () => {
     if (!outputText.value.trim()) {
       form.reset();
       updateSlaVisibility();
+      updateConditionalFields();
       return;
     }
     if (!confirm('Clear all log entries? This cannot be undone.')) return;
     form.reset();
     updateSlaVisibility();
+    updateConditionalFields();
     clearTickets(outputText, copyBtn, logs);
   });
 
@@ -134,6 +185,11 @@ window.addEventListener('DOMContentLoaded', () => {
       menuStatus: document.getElementById('menu-status').value,
       installationStatus: document.getElementById('installation-status').value,
       trainingStatus: document.getElementById('training-status').value,
+      whatsappTicket: document.getElementById('whatsapp-ticket').value.trim(),
+      followUpDateTime: document.getElementById('follow-up-datetime').value,
+      followUpNotes: document.getElementById('follow-up-notes').value.trim(),
+      nextFollowUp: document.getElementById('next-follow-up').value.trim(),
+      standaloneNextFollowUp: document.getElementById('standalone-next-follow-up').value.trim(),
       freeComment: document.getElementById('free-comment').value,
     };
 

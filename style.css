@@ -111,8 +111,8 @@ body {
 
 .app-main {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
-  gap: 18px;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
 .panel {
@@ -161,6 +161,24 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Calendar icon styling for dark mode */
+input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+input[type="datetime-local"]::placeholder {
+  color: rgba(148, 163, 184, 0.7);
+}
+
+/* Light mode calendar icon styling */
+html.light-mode input[type="datetime-local"] {
+  color-scheme: light;
+}
+
+#follow-up-notes-field {
+  display: none;
 }
 
 .form-grid {
@@ -610,38 +628,503 @@ html.light-mode .app-footer {
   color: rgba(71, 85, 105, 0.8);
 }
 
+/* Extra large screens (1400px and up) */
+@media (min-width: 1400px) {
+  .app {
+    margin: 40px auto;
+    padding: 32px 28px 28px;
+    max-width: 1300px;
+  }
+
+  .app-main {
+    gap: 24px;
+  }
+
+  .panel {
+    padding: 20px 18px 16px;
+  }
+
+  .form-grid {
+    gap: 12px 14px;
+  }
+
+  .field span {
+    font-size: 0.75rem;
+  }
+
+  input,
+  textarea,
+  select {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    font-size: 0.88rem;
+  }
+}
+
+/* Large screens and desktops (1200px to 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .app {
+    margin: 32px 20px;
+    padding: 28px 24px 24px;
+    max-width: 1120px;
+  }
+
+  .app-main {
+    gap: 20px;
+  }
+
+  .panel {
+    padding: 18px 16px 14px;
+  }
+
+  .form-grid {
+    gap: 10px 12px;
+  }
+
+  input,
+  textarea,
+  select {
+    padding: 7px 9px;
+    font-size: 0.88rem;
+  }
+
+  .btn {
+    padding: 7px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Desktop (1024px to 1199px) */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .app {
+    margin: 28px 16px;
+    padding: 24px 20px 20px;
+    max-width: 100%;
+  }
+
+  .app-main {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .panel {
+    padding: 16px 14px 12px;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 11px;
+  }
+
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .app-header p {
+    font-size: 0.85rem;
+  }
+}
+
+
+/* Tablets (881px to 1199px) */
+@media (max-width: 1199px) and (min-width: 881px) {
+  .app {
+    margin: 24px 14px;
+    padding: 20px 16px 16px;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+/* Small tablets and large phones (769px to 880px) */
 @media (max-width: 880px) {
   .theme-toggle {
     width: 40px;
     height: 40px;
     font-size: 0.9rem;
   }
-}
 
-@media (max-width: 880px) {
   .app {
-    margin: 16px;
+    margin: 16px 12px;
+    padding: 16px 14px 12px;
+    max-width: 100%;
   }
 
   .app-main {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
-  .tickets-container {
-    max-height: none;
+  .app-header {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .app-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .app-header p {
+    font-size: 0.8rem;
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .panel {
+    padding: 12px 12px 10px;
+  }
+
+  .panel h2 {
+    font-size: 0.95rem;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
+  }
+
+  .field {
+    gap: 4px;
+  }
+
+  .field span {
+    font-size: 0.7rem;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  #output-text {
+    min-height: 200px;
+    max-height: 400px;
+    font-size: 0.8rem;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 0.85rem;
+    padding: 7px 9px;
+  }
+
+  .panel-header {
+    flex-wrap: wrap;
+    gap: 10px;
   }
 }
 
-@media (max-width: 640px) {
+/* Medium phones (481px to 768px) */
+@media (max-width: 768px) {
+  body {
+    padding: 8px 0;
+  }
+
+  .app {
+    margin: 12px 10px;
+    padding: 14px 12px 10px;
+    border-radius: 16px;
+  }
+
+  .app-header {
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .header-left {
+    flex: 1;
+  }
+
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .app-header p {
+    font-size: 0.75rem;
+  }
+
+  .theme-toggle {
+    width: 38px;
+    height: 38px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .panel {
+    padding: 12px 10px 9px;
+    border-radius: 14px;
+  }
+
+  .panel h2 {
+    font-size: 0.9rem;
+    margin: 0 0 10px;
+  }
+
   .form-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .field {
+    font-size: 0.75rem;
+    gap: 3px;
+  }
+
+  .field span {
+    font-size: 0.65rem;
+  }
+
+  input,
+  textarea,
+  select {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+  }
+
+  .btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    border-radius: 20px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .actions .btn {
+    width: 100%;
+  }
+
+  #output-text {
+    min-height: 150px;
+    max-height: 300px;
+    font-size: 0.75rem;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .panel-header h2 {
+    margin: 0;
+  }
+
+  #copy-btn {
+    width: 100%;
+  }
+
+  .panel-header button {
+    width: 100%;
+  }
+
+  .app-footer {
+    font-size: 0.65rem;
+    padding-top: 8px;
+  }
+
+  .output-wrapper {
+    margin-top: 8px;
+  }
+}
+
+/* Small phones (320px to 480px) */
+@media (max-width: 480px) {
+  html,
+  body {
+    font-size: 14px;
+  }
+
+  .app {
+    margin: 8px 6px;
+    padding: 12px 10px 8px;
+    gap: 12px;
+    border-radius: 12px;
   }
 
   .app-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
+  }
+
+  .app-header h1 {
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+  }
+
+  .app-header h1::before {
+    width: 20px;
+    height: 20px;
+  }
+
+  .app-header p {
+    font-size: 0.7rem;
+  }
+
+  .header-left {
+    width: 100%;
+  }
+
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+    font-size: 0.75rem;
+    align-self: flex-end;
+    margin-top: -8px;
+  }
+
+  .app-main {
+    gap: 10px;
+  }
+
+  .panel {
+    padding: 10px 8px 8px;
+    border-radius: 10px;
+    gap: 10px;
+  }
+
+  .panel h2 {
+    font-size: 0.85rem;
+    margin: 0 0 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .form-grid {
+    gap: 6px;
+  }
+
+  .field {
+    font-size: 0.7rem;
+    gap: 2px;
+  }
+
+  .field span {
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+  }
+
+  input,
+  textarea,
+  select {
+    padding: 5px 6px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 50px;
+    max-height: 150px;
+  }
+
+  .btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 16px;
+    gap: 4px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .actions .btn {
+    width: 100%;
+    padding: 6px 8px;
+  }
+
+  #output-text {
+    min-height: 120px;
+    max-height: 250px;
+    font-size: 0.7rem;
+    padding: 5px 6px;
+    resize: none;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .panel-header h2 {
+    font-size: 0.85rem;
+  }
+
+  #copy-btn {
+    width: 100%;
+    padding: 6px 8px;
+  }
+
+  .app-footer {
+    font-size: 0.6rem;
+    padding-top: 6px;
+  }
+
+  .output-wrapper {
+    margin-top: 6px;
+  }
+
+  /* Fix select dropdowns on small screens */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 5px center;
+    background-size: 16px;
+    padding-right: 24px;
   }
 }
+
+/* Ultra small phones (less than 320px) - minimal adjustments */
+@media (max-width: 320px) {
+  .app {
+    margin: 4px;
+    padding: 8px 6px;
+  }
+
+  .app-header h1 {
+    font-size: 1rem;
+  }
+
+  .panel {
+    padding: 8px 6px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 0.7rem;
+  }
+
+  .btn {
+    font-size: 0.65rem;
+    padding: 4px 6px;
+  }
+}
+
 
 @media print {
   body {
