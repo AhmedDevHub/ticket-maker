@@ -8,6 +8,46 @@ const COPY_BTN_LABEL = 'Copy all';
 const COPY_BTN_SUCCESS_LABEL = 'Copied!';
 const COPY_FEEDBACK_DURATION_MS = 2000;
 
+// Theme toggle functionality
+function initThemeToggle() {
+  const themeToggle = document.getElementById('theme-toggle');
+  const html = document.documentElement;
+  
+  // Check for saved theme preference or default to dark mode
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') {
+    html.classList.add('light-mode');
+    updateThemeIcon(true);
+  }
+  
+  themeToggle.addEventListener('click', () => {
+    const isLightMode = html.classList.contains('light-mode');
+    
+    if (isLightMode) {
+      html.classList.remove('light-mode');
+      localStorage.setItem('theme', 'dark');
+      updateThemeIcon(false);
+    } else {
+      html.classList.add('light-mode');
+      localStorage.setItem('theme', 'light');
+      updateThemeIcon(true);
+    }
+  });
+}
+
+function updateThemeIcon(isLightMode) {
+  const themeToggle = document.getElementById('theme-toggle');
+  const icon = themeToggle.querySelector('i');
+  
+  if (isLightMode) {
+    icon.classList.remove('fa-moon');
+    icon.classList.add('fa-sun');
+  } else {
+    icon.classList.remove('fa-sun');
+    icon.classList.add('fa-moon');
+  }
+}
+
 function clearTickets(output, copyBtn, logs) {
   if (logs) logs.length = 0;
   if (output) output.value = '';
@@ -45,6 +85,9 @@ function buildLogLine(data) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize theme toggle
+  initThemeToggle();
+  
   const form = document.getElementById('ticket-form');
   const outputText = document.getElementById('output-text');
   const copyBtn = document.getElementById('copy-btn');

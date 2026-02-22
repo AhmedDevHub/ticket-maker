@@ -5,19 +5,33 @@
 }
 
 :root {
-  --bg: #050816;
-  --bg-elevated: #0f172a;
-  --bg-soft: #020617;
-  --border-subtle: rgba(148, 163, 184, 0.35);
+  --bg: #0f1419;
+  --bg-elevated: #1a1f2e;
+  --bg-soft: #16192b;
+  --border-subtle: rgba(148, 163, 184, 0.25);
   --accent: #38bdf8;
-  --accent-soft: rgba(56, 189, 248, 0.1);
+  --accent-soft: rgba(56, 189, 248, 0.08);
   --accent-strong: #0ea5e9;
-  --text-main: #e5e7eb;
-  --text-muted: #9ca3af;
+  --text-main: #e2e8f0;
+  --text-muted: #a1afc9;
   --danger: #f97373;
   --radius-lg: 18px;
   --radius-md: 10px;
-  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.75);
+  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.3);
+}
+
+html.light-mode {
+  --bg: #f8fafc;
+  --bg-elevated: #f1f5f9;
+  --bg-soft: #ffffff;
+  --border-subtle: rgba(51, 65, 85, 0.35);
+  --accent: #0284c7;
+  --accent-soft: rgba(2, 132, 199, 0.1);
+  --accent-strong: #0369a1;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --danger: #dc2626;
+  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.08);
 }
 
 html,
@@ -28,7 +42,7 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text',
     'Segoe UI', sans-serif;
   color: var(--text-main);
-  background: radial-gradient(circle at top, #0f172a 0, #020617 40%, #020617 100%);
+  background: radial-gradient(circle at top, #1a1f2e 0, #16192b 40%, #0f1419 100%);
 }
 
 body {
@@ -44,11 +58,11 @@ body {
   padding: 24px 22px 20px;
   border-radius: 24px;
   background:
-    radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 55%),
-    radial-gradient(circle at top right, rgba(37, 99, 235, 0.18), transparent 55%),
-    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 55%),
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 55%),
+    linear-gradient(135deg, rgba(26, 31, 46, 0.95), rgba(22, 25, 43, 0.95));
   box-shadow: var(--shadow-soft);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   backdrop-filter: blur(24px) saturate(130%);
   display: flex;
   flex-direction: column;
@@ -60,6 +74,13 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
 }
 
 .app-header h1 {
@@ -95,11 +116,11 @@ body {
 }
 
 .panel {
-  background: radial-gradient(circle at top, #0b1220 0, #020617 70%);
+  background: radial-gradient(circle at top, #1a1f2e 0, #16192b 70%);
   border-radius: var(--radius-lg);
   padding: 16px 16px 14px;
   border: 1px solid var(--border-subtle);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
   position: relative;
 }
 
@@ -174,9 +195,9 @@ body {
 input,
 textarea,
 select {
-  background: radial-gradient(circle at top, #020617 0, #020617 40%);
+  background: radial-gradient(circle at top, #16192b 0, #16192b 40%);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(51, 65, 85, 0.9);
+  border: 1px solid rgba(51, 65, 85, 0.7);
   padding: 7px 9px;
   color: var(--text-main);
   font-size: 0.86rem;
@@ -233,7 +254,7 @@ textarea:focus,
 select:focus {
   border-color: var(--accent-strong);
   box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
-  background: radial-gradient(circle at top, #020617 0, #020617 45%);
+  background: radial-gradient(circle at top, #16192b 0, #16192b 45%);
   transform: translateY(-0.5px);
 }
 
@@ -336,7 +357,7 @@ textarea {
 }
 
 .ticket {
-  background: radial-gradient(circle at top, #020617 0, #020617 50%);
+  background: radial-gradient(circle at top, #16192b 0, #16192b 50%);
   border-radius: 16px;
   border: 1px dashed rgba(148, 163, 184, 0.7);
   padding: 10px 11px;
@@ -345,7 +366,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.85);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
 }
 
 .ticket-main {
@@ -403,6 +424,198 @@ textarea {
 
 #shipping-sla-field {
   display: none;
+}
+
+.theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: linear-gradient(135deg, var(--accent-soft), rgba(56, 189, 248, 0.05));
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 0 0 var(--accent-soft);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1) rotate(20deg);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle i {
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  display: inline-block;
+}
+
+.theme-toggle i.fa-sun {
+  animation: rotateSun 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-toggle i.fa-moon {
+  animation: rotateMoon 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rotateSun {
+  from {
+    transform: rotate(-180deg);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes rotateMoon {
+  from {
+    transform: rotate(180deg);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+}
+
+html.light-mode {
+  --bg: #f5f7fa;
+  --bg-elevated: #eff2f7;
+  --bg-soft: #ffffff;
+  --border-subtle: rgba(59, 130, 246, 0.2);
+  --accent: #0284c7;
+  --accent-soft: rgba(2, 132, 199, 0.08);
+  --accent-strong: #0369a1;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --danger: #dc2626;
+  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.06);
+}
+
+html.light-mode body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #eff2f7 50%, #ffffff 100%);
+}
+
+html.light-mode .app {
+  background:
+    radial-gradient(circle at top left, rgba(2, 132, 199, 0.08), transparent 55%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(239, 242, 247, 0.95));
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+html.light-mode .panel {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(59, 130, 246, 0.15);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+}
+
+html.light-mode input,
+html.light-mode textarea,
+html.light-mode select {
+  background: #ffffff;
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #0f172a;
+}
+
+html.light-mode input::placeholder,
+html.light-mode textarea::placeholder {
+  color: #94a3b8;
+}
+
+html.light-mode input:focus,
+html.light-mode textarea:focus,
+html.light-mode select:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+html.light-mode select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+html.light-mode select option:checked,
+html.light-mode select option:hover {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+html.light-mode .ticket {
+  background: #ffffff;
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+html.light-mode .panel h2 {
+  color: #0f172a;
+}
+
+html.light-mode .field span {
+  color: #475569;
+}
+
+html.light-mode .btn.primary {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+html.light-mode .btn.primary:hover {
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
+}
+
+html.light-mode .btn.secondary {
+  background: #f1f5f9;
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #0f172a;
+}
+
+html.light-mode .btn.secondary:hover {
+  background: #e2e8f0;
+  color: #0369a1;
+}
+
+html.light-mode .btn.ghost {
+  color: #475569;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+html.light-mode .btn.ghost:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+html.light-mode .theme-toggle {
+  border-color: #0284c7;
+  background: rgba(2, 132, 199, 0.1);
+  color: #0284c7;
+}
+
+html.light-mode .theme-toggle:hover {
+  box-shadow: 0 0 20px rgba(2, 132, 199, 0.2);
+}
+
+html.light-mode .app-footer {
+  color: rgba(71, 85, 105, 0.8);
+}
+
+@media (max-width: 880px) {
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 880px) {
