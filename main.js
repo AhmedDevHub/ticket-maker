@@ -4,6 +4,13 @@ const SHIPPING_NOT_YET_DELIVERED = 'Not yet delivered';
 // Status values that are omitted from the log output
 const EXCLUDED_FROM_OUTPUT = ['not started yet', 'not line item'];
 
+// Excluded shipping and menu statuses
+const EXCLUDED_SHIPPING = ['not started yet', 'no line item/ no hw to be shipped.'];
+const EXCLUDED_MENU = ['not started yet', 'not line item'];
+
+// Activation statuses to exclude from output
+const EXCLUDED_ACTIVATION = ['no need'];
+
 const COPY_BTN_LABEL = 'Copy all';
 const COPY_BTN_SUCCESS_LABEL = 'Copied!';
 const COPY_FEEDBACK_DURATION_MS = 2000;
@@ -69,24 +76,43 @@ function buildLogLine(data) {
     data.shippingStatus === SHIPPING_NOT_YET_DELIVERED && data.shippingSla
       ? ` (${data.shippingSla})`
       : '';
-  if (!shouldExcludeFromOutput(data.activationStatus))
+  
+  // Check if activation should be excluded ("No need" option)
+  if (data.activationStatus && !EXCLUDED_ACTIVATION.includes(data.activationStatus.toLowerCase()))
     parts.push(`Activation: ${data.activationStatus || 'Not set'}`);
-  if (!shouldExcludeFromOutput(data.shippingStatus))
+  
+  // Check if shipping status should be excluded
+  if (data.shippingStatus && !EXCLUDED_SHIPPING.includes(data.shippingStatus.toLowerCase()))
     parts.push(`Shipping: ${data.shippingStatus || 'Not set'}${slaPart}`);
-  if (!shouldExcludeFromOutput(data.menuStatus))
+  
+  // Check if menu status should be excluded
+  if (data.menuStatus && !EXCLUDED_MENU.includes(data.menuStatus.toLowerCase()))
     parts.push(`Menu: ${data.menuStatus || 'Not set'}`);
-  if (!shouldExcludeFromOutput(data.installationStatus))
-    parts.push(`Installation: ${data.installationStatus || 'Not set'}`);
-  if (!shouldExcludeFromOutput(data.trainingStatus))
-    parts.push(`Training: ${data.trainingStatus || 'Not set'}`);
+  
+  // Check if installation status should be excluded
+  if (data.installationStatus && !shouldExcludeFromOutput(data.installationStatus)) {
+    let installationLine = `Installation: ${data.installationStatus}`;
+    if (data.installationStatus === 'Scheduled' && data.installationDatetime) {
+      installationLine += ` (Installation Date & Time: ${data.installationDatetime})`;
+    }
+    parts.push(installationLine);
+  }
+  
+  // Check if training status should be excluded
+  if (data.trainingStatus && !shouldExcludeFromOutput(data.trainingStatus)) {
+    let trainingLine = `Training: ${data.trainingStatus}`;
+    if (data.trainingStatus === 'Scheduled' && data.trainingDatetime) {
+      trainingLine += ` (Training Date & Time: ${data.trainingDatetime})`;
+    }
+    parts.push(trainingLine);
+  }
+  
   if (data.whatsappTicket)
     parts.push(`WhatsApp Ticket: ${data.whatsappTicket}`);
   if (data.followUpDateTime)
     parts.push(`Next Follow-up: ${data.followUpDateTime}`);
   if (data.followUpNotes)
     parts.push(`Follow-up Notes: ${data.followUpNotes}`);
-  if (data.nextFollowUp)
-    parts.push(`Next Follow up: ${data.nextFollowUp}`);
   if (data.standaloneNextFollowUp)
     parts.push(`Next Follow up: ${data.standaloneNextFollowUp}`);
   const comment = (data.freeComment || '').trim();
@@ -108,7 +134,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const whatsappTicketField = document.getElementById('whatsapp-ticket-field');
   const followUpField = document.getElementById('follow-up-field');
   const followUpNotesField = document.getElementById('follow-up-notes-field');
-  const nextFollowUpField = document.getElementById('next-follow-up-field');
+  const installationStatusInput = document.getElementById('installation-status');
+  const trainingStatusInput = document.getElementById('training-status');
+  const installationDatetimeField = document.getElementById('installation-datetime-field');
+  const trainingDatetimeField = document.getElementById('training-datetime-field');
   const logs = [];
 
   if (!form || !outputText || !copyBtn || !clearBtn) return;
@@ -123,29 +152,128 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!callStatusInput) return;
     const callStatus = callStatusInput.value;
     
-    // Show WhatsApp ticket field when "Contacted on WhatsApp" is selected
-    if (whatsappTicketField) {
-      whatsappTicketField.style.display = 
-        callStatus === 'Contacted on WhatsApp' ? '' : 'none';
+    // For "Not connected" status, show only WhatsApp ticket and hide other fields
+    if (callStatus === 'Not connected') {
+      if (whatsappTicketField) whatsappTicketField.style.display = '';
+      if (followUpField) followUpField.style.display = 'none';
+      if (followUpNotesField) followUpNotesField.style.display = 'none';
+      // Hide all form fields and make them not required
+      hideAndUnrequireAllFormFields();
+    } 
+    // For "Call back requested" status, show only Next follow-up and hide other fields
+    else if (callStatus === 'Call back requested') {
+      if (whatsappTicketField) whatsappTicketField.style.display = 'none';
+      if (followUpField) followUpField.style.display = 'none';
+      if (followUpNotesField) followUpNotesField.style.display = 'none';
+      // Hide all form fields and make them not required
+      hideAndUnrequireAllFormFields();
+      // Show only the Next follow-up field
+      const nextFollowUpInput = document.getElementById('standalone-next-follow-up');
+      if (nextFollowUpInput) nextFollowUpInput.parentElement.style.display = '';
     }
+    // For "Dropped" status, show free comment and next follow-up
+    else if (callStatus === 'Dropped') {
+      if (whatsappTicketField) whatsappTicketField.style.display = 'none';
+      if (followUpField) followUpField.style.display = 'none';
+      if (followUpNotesField) followUpNotesField.style.display = 'none';
+      // Hide all form fields and make them not required
+      hideAndUnrequireAllFormFields();
+      // Show only the Next follow-up field and free comment will show below
+      const nextFollowUpInput = document.getElementById('standalone-next-follow-up');
+      if (nextFollowUpInput) nextFollowUpInput.parentElement.style.display = '';
+    }
+    else {
+      // Show all form fields again
+      showAndRequireAllFormFields();
+      // Show WhatsApp ticket field when "Contacted on WhatsApp" is selected
+      if (whatsappTicketField) {
+        whatsappTicketField.style.display = 
+          callStatus === 'Contacted on WhatsApp' ? '' : 'none';
+      }
+      
+      // Show follow-up date/time field for "Contacted on WhatsApp"
+      if (followUpField) {
+        followUpField.style.display = 
+          (callStatus === 'Contacted on WhatsApp') ? '' : 'none';
+      }
+
+      // Show follow-up notes field for "Contacted on WhatsApp"
+      if (followUpNotesField) {
+        followUpNotesField.style.display = 
+          (callStatus === 'Contacted on WhatsApp') ? '' : 'none';
+      }
+    }
+  }
+
+  function hideAndUnrequireAllFormFields() {
+    const fieldsToHide = [
+      'activation-status',
+      'shipping-status',
+      'shipping-sla',
+      'menu-status',
+      'installation-status',
+      'training-status',
+      'standalone-next-follow-up'
+    ];
     
-    // Show follow-up date/time field for "Call back requested" and "Contacted on WhatsApp"
-    if (followUpField) {
-      followUpField.style.display = 
-        (callStatus === 'Call back requested' || callStatus === 'Contacted on WhatsApp') ? '' : 'none';
-    }
+    fieldsToHide.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        // Hide the parent label
+        field.parentElement.style.display = 'none';
+        // Remove required attribute from the field itself
+        field.removeAttribute('required');
+      }
+    });
+    
+    // Also hide and unrequire the parent fields
+    const parentFieldsToHide = ['shipping-sla-field', 'installation-datetime-field', 'training-datetime-field'];
+    parentFieldsToHide.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.style.display = 'none';
+        const input = field.querySelector('input, select, textarea');
+        if (input) input.removeAttribute('required');
+      }
+    });
+  }
 
-    // Show follow-up notes field for "Call back requested" and "Contacted on WhatsApp"
-    if (followUpNotesField) {
-      followUpNotesField.style.display = 
-        (callStatus === 'Call back requested' || callStatus === 'Contacted on WhatsApp') ? '' : 'none';
+  function showAndRequireAllFormFields() {
+    const fieldsToShow = [
+      'activation-status',
+      'shipping-status',
+      'menu-status',
+      'installation-status',
+      'training-status'
+    ];
+    
+    fieldsToShow.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.parentElement.style.display = '';
+        // Restore required attribute
+        field.setAttribute('required', '');
+      }
+    });
+    
+    // Show standalone-next-follow-up but do NOT make it required
+    const nextFollowUp = document.getElementById('standalone-next-follow-up');
+    if (nextFollowUp) {
+      nextFollowUp.parentElement.style.display = '';
+      nextFollowUp.removeAttribute('required');
     }
+  }
 
-    // Show next follow-up field for "Call back requested" and "Contacted on WhatsApp"
-    if (nextFollowUpField) {
-      nextFollowUpField.style.display = 
-        (callStatus === 'Call back requested' || callStatus === 'Contacted on WhatsApp') ? '' : 'none';
-    }
+  function updateInstallationDatetimeVisibility() {
+    if (!installationStatusInput || !installationDatetimeField) return;
+    const isScheduled = installationStatusInput.value === 'Scheduled';
+    installationDatetimeField.style.display = isScheduled ? 'flex' : 'none';
+  }
+
+  function updateTrainingDatetimeVisibility() {
+    if (!trainingStatusInput || !trainingDatetimeField) return;
+    const isScheduled = trainingStatusInput.value === 'Scheduled';
+    trainingDatetimeField.style.display = isScheduled ? 'flex' : 'none';
   }
 
   if (shippingStatusInput) {
@@ -158,17 +286,35 @@ window.addEventListener('DOMContentLoaded', () => {
     updateConditionalFields();
   }
 
+  if (installationStatusInput) {
+    installationStatusInput.addEventListener('change', () => {
+      updateInstallationDatetimeVisibility();
+    });
+    updateInstallationDatetimeVisibility();
+  }
+
+  if (trainingStatusInput) {
+    trainingStatusInput.addEventListener('change', () => {
+      updateTrainingDatetimeVisibility();
+    });
+    updateTrainingDatetimeVisibility();
+  }
+
   clearBtn.addEventListener('click', () => {
     if (!outputText.value.trim()) {
       form.reset();
       updateSlaVisibility();
       updateConditionalFields();
+      updateInstallationDatetimeVisibility();
+      updateTrainingDatetimeVisibility();
       return;
     }
     if (!confirm('Clear all log entries? This cannot be undone.')) return;
     form.reset();
     updateSlaVisibility();
     updateConditionalFields();
+    updateInstallationDatetimeVisibility();
+    updateTrainingDatetimeVisibility();
     clearTickets(outputText, copyBtn, logs);
   });
 
@@ -184,11 +330,12 @@ window.addEventListener('DOMContentLoaded', () => {
       shippingSla: document.getElementById('shipping-sla').value,
       menuStatus: document.getElementById('menu-status').value,
       installationStatus: document.getElementById('installation-status').value,
+      installationDatetime: document.getElementById('installation-datetime').value,
       trainingStatus: document.getElementById('training-status').value,
+      trainingDatetime: document.getElementById('training-datetime').value,
       whatsappTicket: document.getElementById('whatsapp-ticket').value.trim(),
       followUpDateTime: document.getElementById('follow-up-datetime').value,
       followUpNotes: document.getElementById('follow-up-notes').value.trim(),
-      nextFollowUp: document.getElementById('next-follow-up').value.trim(),
       standaloneNextFollowUp: document.getElementById('standalone-next-follow-up').value.trim(),
       freeComment: document.getElementById('free-comment').value,
     };
@@ -221,6 +368,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     form.reset();
     updateSlaVisibility();
+    updateInstallationDatetimeVisibility();
+    updateTrainingDatetimeVisibility();
+    updateConditionalFields();
   });
 
   copyBtn.addEventListener('click', () => {

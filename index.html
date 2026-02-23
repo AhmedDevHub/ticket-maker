@@ -62,17 +62,13 @@
               <input type="text" id="follow-up-notes" placeholder="Enter follow-up details (optional)" />
             </label>
 
-            <label class="field" id="next-follow-up-field" style="display: none;">
-              <span>Next follow up</span>
-              <input type="text" id="next-follow-up" placeholder="Enter next follow-up details (optional)" />
-            </label>
-
             <label class="field field-required">
               <span>Activation</span>
               <select id="activation-status" required>
                 <option value="">Select</option>
                 <option value="Done">Done</option>
                 <option value="Not done">Not done</option>
+                <option value="No need">No need</option>
               </select>
             </label>
 
@@ -145,8 +141,18 @@
               </select>
             </label>
 
+            <label class="field" id="installation-datetime-field" style="display: none;">
+              <span>Installation Date & Time</span>
+              <input type="datetime-local" id="installation-datetime" />
+            </label>
+
+            <label class="field" id="training-datetime-field" style="display: none;">
+              <span>Training Date & Time</span>
+              <input type="datetime-local" id="training-datetime" />
+            </label>
+
             <label class="field field-full">
-              <span>Next follow up</span>
+              <span>Next follow up (Optional)</span>
               <input type="datetime-local" id="standalone-next-follow-up" />
             </label>
           </div>
