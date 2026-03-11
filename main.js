@@ -21,13 +21,13 @@ function setVisible(fieldId, visible) {
 
 /* Build all time <select> dropdowns with 15-min slots 00:00 – 24:00 */
 function buildTimeSelects() {
-  const slots = [''];                          // blank first option
+  const slots = [''];
   for (let h = 0; h < 24; h++) {
     for (let m = 0; m < 60; m += 15) {
       slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
     }
   }
-  slots.push('24:00');                         // end-of-day sentinel
+  slots.push('24:00');
 
   document.querySelectorAll('select.time-select').forEach(sel => {
     sel.innerHTML = slots.map((t, i) =>
@@ -45,7 +45,6 @@ function combineDateTime(dateId, timeId) {
 
 function formatDateTime(raw) {
   if (!raw) return '';
-  // raw is "YYYY-MM-DD HH:mm" — reformat as DD/MM/YYYY HH:mm
   const [datePart, timePart] = raw.split(' ');
   if (!datePart) return raw;
   const [y, m, d] = datePart.split('-');
@@ -86,11 +85,11 @@ function buildLogLine(data) {
     push('Training', data.trainingStatus + dt);
   }
 
-  if (data.whatsappTicket)      push('WhatsApp Ticket', data.whatsappTicket);
-  if (data.followUpDateTime)    push('Next Follow-up', formatDateTime(data.followUpDateTime));
-  if (data.followUpNotes)       push('Follow-up Notes', data.followUpNotes);
+  if (data.whatsappTicket)         push('WhatsApp Ticket', data.whatsappTicket);
+  if (data.followUpDateTime)       push('Next Follow-up', formatDateTime(data.followUpDateTime));
+  if (data.followUpNotes)          push('Follow-up Notes', data.followUpNotes);
   if (data.standaloneNextFollowUp) push('Next Follow-up', formatDateTime(data.standaloneNextFollowUp));
-  if (data.freeComment?.trim()) push('Comment', data.freeComment.trim());
+  if (data.freeComment?.trim())    push('Comment', data.freeComment.trim());
 
   return lines.join('\n');
 }
@@ -98,10 +97,7 @@ function buildLogLine(data) {
 /* ─── Main ───────────────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', () => {
 
-  /* DOM refs */
   const form               = $('ticket-form');
-
-  // Populate all time dropdowns first
   buildTimeSelects();
   const outputText         = $('output-text');
   const copyBtn            = $('copy-btn');
@@ -140,7 +136,13 @@ window.addEventListener('DOMContentLoaded', () => {
     training:     'training-status',
   };
 
-
+  /* ADDED: was missing — shows/hides the SLA field under shipping */
+  function updateSlaVisibility() {
+    const slaField = $('shipping-sla-field');
+    if (slaField) {
+      slaField.style.display = shippingInput?.value === SHIPPING_SLA_TRIGGER ? '' : 'none';
+    }
+  }
 
   function updateInstallDatetime() {
     const field = $('installation-datetime-field');
@@ -152,13 +154,24 @@ window.addEventListener('DOMContentLoaded', () => {
     if (field) field.style.display = trainingInput?.value === 'Scheduled' ? 'flex' : 'none';
   }
 
-
+  /* ADDED: was missing — hides all status fields and sub-fields */
+  function hideAllStatusFields() {
+    Object.values(STATUS_FIELD_MAP).forEach(id => setVisible(id, false));
+    const installDt = $('installation-datetime-field');
+    if (installDt) installDt.style.display = 'none';
+    const trainingDt = $('training-datetime-field');
+    if (trainingDt) trainingDt.style.display = 'none';
+    const slaField = $('shipping-sla-field');
+    if (slaField) slaField.style.display = 'none';
+  }
 
   function showAllStatusFields() {
     Object.values(STATUS_FIELD_MAP).forEach(id => setVisible(id, true));
-    // standalone next follow-up is optional — never required
     const nfu = $('standalone-next-follow-up-date');
-    if (nfu) { nfu.closest('label')?.style && (nfu.closest('label').style.display = ''); }
+    if (nfu) {
+      const lbl = nfu.closest('label');
+      if (lbl) lbl.style.display = '';
+    }
     updateSlaVisibility();
     updateInstallDatetime();
     updateTrainingDatetime();
@@ -166,33 +179,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function updateCallStatus() {
     const status = callStatusInput.value;
-    const isWhatsApp   = status === 'Contacted on WhatsApp';
-    const isConnected  = status === 'Connected';
-    const isDropped    = status === 'Dropped';
-    const isCbReq      = status === 'Call back requested';
-    const isNotConn    = status === 'Not connected';
+    const isWhatsApp  = status === 'Contacted on WhatsApp';
+    const isConnected = status === 'Connected';
+    const isDropped   = status === 'Dropped';
+    const isCbReq     = status === 'Call back requested';
+    const isNotConn   = status === 'Not connected';
 
-    // WhatsApp ticket field
     const wtf = $('whatsapp-ticket-field');
     if (wtf) wtf.style.display = isWhatsApp ? '' : 'none';
 
-    // Follow-up date/notes — only for WhatsApp
     const fuf  = $('follow-up-field');
     const funf = $('follow-up-notes-field');
     if (fuf)  fuf.style.display  = isWhatsApp ? '' : 'none';
     if (funf) funf.style.display = isWhatsApp ? '' : 'none';
 
-    // Status fields — hide for non-productive calls
     if (isConnected || isWhatsApp) {
-      updateWorkOrderVisibility(); // restore based on work order type
+      updateWorkOrderVisibility();
     } else if (isDropped || isCbReq || isNotConn) {
       hideAllStatusFields();
-      // Always show standalone follow-up for these statuses
       const standaloneLabel = $('standalone-next-follow-up-date')?.closest('label');
       if (standaloneLabel) standaloneLabel.style.display = '';
     }
   }
 
+  /* FIXED: follow-up work order now correctly shows only checked sections */
   function updateWorkOrderVisibility() {
     const isNewClient = workOrderTypeInput.value === 'new-client';
     const followUpOptions = $('follow-up-options');
@@ -201,14 +211,26 @@ window.addEventListener('DOMContentLoaded', () => {
     if (isNewClient) {
       showAllStatusFields();
     } else {
-      // Show only checked sections
+      // Show only fields whose checkbox is checked
       Object.entries(STATUS_FIELD_MAP).forEach(([section, fieldId]) => {
-        const checked = showSections.find(cb => cb.value === section)?.checked;
-        setVisible(fieldId, !!checked);
+        const cb = showSections.find(cb => cb.value === section);
+        setVisible(fieldId, cb?.checked ?? false);
       });
-      updateSlaVisibility();
-      updateInstallDatetime();
-      updateTrainingDatetime();
+
+      // Shipping sub-field
+      const shippingChecked = showSections.find(cb => cb.value === 'shipping')?.checked ?? false;
+      const slaField = $('shipping-sla-field');
+      if (slaField) slaField.style.display = shippingChecked ? (shippingInput?.value === SHIPPING_SLA_TRIGGER ? '' : 'none') : 'none';
+
+      // Installation sub-field
+      const installChecked = showSections.find(cb => cb.value === 'installation')?.checked ?? false;
+      const installDt = $('installation-datetime-field');
+      if (installDt) installDt.style.display = installChecked && installInput?.value === 'Scheduled' ? 'flex' : 'none';
+
+      // Training sub-field
+      const trainingChecked = showSections.find(cb => cb.value === 'training')?.checked ?? false;
+      const trainingDt = $('training-datetime-field');
+      if (trainingDt) trainingDt.style.display = trainingChecked && trainingInput?.value === 'Scheduled' ? 'flex' : 'none';
     }
   }
 
@@ -220,7 +242,6 @@ window.addEventListener('DOMContentLoaded', () => {
   workOrderTypeInput.addEventListener('change', updateWorkOrderVisibility);
   showSections.forEach(cb => cb.addEventListener('change', updateWorkOrderVisibility));
 
-  // Initial state
   updateWorkOrderVisibility();
   updateCallStatus();
 
@@ -240,13 +261,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const data = { customerName: name, customerPhone: phone, callStatus: call };
 
-    // Collect visible status fields
     Object.values(STATUS_FIELD_MAP).forEach(fieldId => {
       const el = $(fieldId);
       if (!el) return;
       const wrapper = el.closest('label') || el.parentElement;
       if (wrapper.style.display === 'none') return;
-      const key = fieldId.replace(/-([a-z])/g, (_, c) => c.toUpperCase()); // camelCase
+      const key = fieldId.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
       data[key] = el.value;
 
       if (fieldId === 'shipping-status' && el.value === SHIPPING_SLA_TRIGGER)
@@ -280,6 +300,7 @@ window.addEventListener('DOMContentLoaded', () => {
     copyBtn.disabled = false;
 
     form.reset();
+    showSections.forEach(cb => cb.checked = false);
     updateWorkOrderVisibility();
     updateCallStatus();
     updateSlaVisibility();
@@ -293,6 +314,7 @@ window.addEventListener('DOMContentLoaded', () => {
     outputText.value = '';
     copyBtn.disabled = true;
     form.reset();
+    showSections.forEach(cb => cb.checked = false);
     updateWorkOrderVisibility();
     updateCallStatus();
     updateSlaVisibility();
