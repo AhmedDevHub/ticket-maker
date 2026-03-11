@@ -1,408 +1,321 @@
-// Values that trigger "Shipping SLA" to show
-const SHIPPING_NOT_YET_DELIVERED = 'Not yet delivered';
+/* ─── Constants ─────────────────────────────────────────────────── */
+const EXCLUDED_ACTIVATION = new Set(['no need']);
+const EXCLUDED_SHIPPING   = new Set(['not started yet', 'no line item/ no hw to be shipped.', 'no line item.']);
+const EXCLUDED_MENU       = new Set(['not started yet', 'not line item', 'not need']);
+const EXCLUDED_GENERIC    = new Set(['not started yet', 'not line item']);
+const SHIPPING_SLA_TRIGGER = 'Not yet delivered';
 
-// Status values that are omitted from the log output
-const EXCLUDED_FROM_OUTPUT = ['not started yet', 'not line item'];
+/* ─── Helpers ───────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
 
-// Excluded shipping and menu statuses
-const EXCLUDED_SHIPPING = ['not started yet', 'no line item/ no hw to be shipped.'];
-const EXCLUDED_MENU = ['not started yet', 'not line item'];
+function show(el) { if (el) el.style.display = ''; }
+function hide(el) { if (el) el.style.display = 'none'; }
 
-// Activation statuses to exclude from output
-const EXCLUDED_ACTIVATION = ['no need'];
+function setVisible(fieldId, visible) {
+  const el = $(fieldId);
+  if (!el) return;
+  const wrapper = el.closest('label') || el.parentElement;
+  wrapper.style.display = visible ? '' : 'none';
+  visible ? el.setAttribute('required', '') : el.removeAttribute('required');
+}
 
-const COPY_BTN_LABEL = 'Copy all';
-const COPY_BTN_SUCCESS_LABEL = 'Copied!';
-const COPY_FEEDBACK_DURATION_MS = 2000;
-
-// Theme toggle functionality
-function initThemeToggle() {
-  const themeToggle = document.getElementById('theme-toggle');
-  const html = document.documentElement;
-  
-  // Check for saved theme preference or default to dark mode
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  if (savedTheme === 'light') {
-    html.classList.add('light-mode');
-    updateThemeIcon(true);
-  }
-  
-  themeToggle.addEventListener('click', () => {
-    const isLightMode = html.classList.contains('light-mode');
-    
-    if (isLightMode) {
-      html.classList.remove('light-mode');
-      localStorage.setItem('theme', 'dark');
-      updateThemeIcon(false);
-    } else {
-      html.classList.add('light-mode');
-      localStorage.setItem('theme', 'light');
-      updateThemeIcon(true);
+/* Build all time <select> dropdowns with 15-min slots 00:00 – 24:00 */
+function buildTimeSelects() {
+  const slots = [''];                          // blank first option
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
     }
+  }
+  slots.push('24:00');                         // end-of-day sentinel
+
+  document.querySelectorAll('select.time-select').forEach(sel => {
+    sel.innerHTML = slots.map((t, i) =>
+      `<option value="${t}">${i === 0 ? '— Time —' : t}</option>`
+    ).join('');
   });
 }
 
-function updateThemeIcon(isLightMode) {
-  const themeToggle = document.getElementById('theme-toggle');
-  const icon = themeToggle.querySelector('i');
-  
-  if (isLightMode) {
-    icon.classList.remove('fa-moon');
-    icon.classList.add('fa-sun');
-  } else {
-    icon.classList.remove('fa-sun');
-    icon.classList.add('fa-moon');
-  }
+function combineDateTime(dateId, timeId) {
+  const d = $(dateId)?.value;
+  const t = $(timeId)?.value;
+  if (!d && !t) return '';
+  return `${d || ''} ${t || ''}`.trim();
 }
 
-function clearTickets(output, copyBtn, logs) {
-  if (logs) logs.length = 0;
-  if (output) output.value = '';
-  if (copyBtn) copyBtn.disabled = true;
+function formatDateTime(raw) {
+  if (!raw) return '';
+  // raw is "YYYY-MM-DD HH:mm" — reformat as DD/MM/YYYY HH:mm
+  const [datePart, timePart] = raw.split(' ');
+  if (!datePart) return raw;
+  const [y, m, d] = datePart.split('-');
+  return `${d}/${m}/${y}${timePart ? ' ' + timePart : ''}`;
 }
 
-function shouldExcludeFromOutput(value) {
-  if (!value || !value.trim()) return false;
-  return EXCLUDED_FROM_OUTPUT.includes(value.trim().toLowerCase());
-}
-
+/* ─── Log Builder ───────────────────────────────────────────────── */
 function buildLogLine(data) {
-  const parts = [
+  const lines = [
     `Customer: ${data.customerName}`,
     `Phone: ${data.customerPhone || '-'}`,
     `Call: ${data.callStatus}`,
   ];
-  const slaPart =
-    data.shippingStatus === SHIPPING_NOT_YET_DELIVERED && data.shippingSla
-      ? ` (${data.shippingSla})`
-      : '';
-  
-  // Check if activation should be excluded ("No need" option)
-  if (data.activationStatus && !EXCLUDED_ACTIVATION.includes(data.activationStatus.toLowerCase()))
-    parts.push(`Activation: ${data.activationStatus || 'Not set'}`);
-  
-  // Check if shipping status should be excluded
-  if (data.shippingStatus && !EXCLUDED_SHIPPING.includes(data.shippingStatus.toLowerCase()))
-    parts.push(`Shipping: ${data.shippingStatus || 'Not set'}${slaPart}`);
-  
-  // Check if menu status should be excluded
-  if (data.menuStatus && !EXCLUDED_MENU.includes(data.menuStatus.toLowerCase()))
-    parts.push(`Menu: ${data.menuStatus || 'Not set'}`);
-  
-  // Check if installation status should be excluded
-  if (data.installationStatus && !shouldExcludeFromOutput(data.installationStatus)) {
-    let installationLine = `Installation: ${data.installationStatus}`;
-    if (data.installationStatus === 'Scheduled' && data.installationDatetime) {
-      installationLine += ` (Installation Date & Time: ${data.installationDatetime})`;
-    }
-    parts.push(installationLine);
+
+  const push = (label, value) => lines.push(`${label}: ${value}`);
+
+  if (data.activationStatus && !EXCLUDED_ACTIVATION.has(data.activationStatus.toLowerCase()))
+    push('Activation', data.activationStatus);
+
+  if (data.shippingStatus && !EXCLUDED_SHIPPING.has(data.shippingStatus.toLowerCase())) {
+    const sla = (data.shippingStatus === SHIPPING_SLA_TRIGGER && data.shippingSla)
+      ? ` (${data.shippingSla})` : '';
+    push('Shipping', data.shippingStatus + sla);
   }
-  
-  // Check if training status should be excluded
-  if (data.trainingStatus && !shouldExcludeFromOutput(data.trainingStatus)) {
-    let trainingLine = `Training: ${data.trainingStatus}`;
-    if (data.trainingStatus === 'Scheduled' && data.trainingDatetime) {
-      trainingLine += ` (Training Date & Time: ${data.trainingDatetime})`;
-    }
-    parts.push(trainingLine);
+
+  if (data.menuStatus && !EXCLUDED_MENU.has(data.menuStatus.toLowerCase()))
+    push('Menu', data.menuStatus);
+
+  if (data.installationStatus && !EXCLUDED_GENERIC.has(data.installationStatus.toLowerCase())) {
+    const dt = (data.installationStatus === 'Scheduled' && data.installationDatetime)
+      ? ` (Date & Time: ${formatDateTime(data.installationDatetime)})` : '';
+    push('Installation', data.installationStatus + dt);
   }
-  
-  if (data.whatsappTicket)
-    parts.push(`WhatsApp Ticket: ${data.whatsappTicket}`);
-  if (data.followUpDateTime)
-    parts.push(`Next Follow-up: ${data.followUpDateTime}`);
-  if (data.followUpNotes)
-    parts.push(`Follow-up Notes: ${data.followUpNotes}`);
-  if (data.standaloneNextFollowUp)
-    parts.push(`Next Follow up: ${data.standaloneNextFollowUp}`);
-  const comment = (data.freeComment || '').trim();
-  if (comment) parts.push(`Comment: ${comment}`);
-  return parts.join('\n');
+
+  if (data.trainingStatus && !EXCLUDED_GENERIC.has(data.trainingStatus.toLowerCase())) {
+    const dt = (data.trainingStatus === 'Scheduled' && data.trainingDatetime)
+      ? ` (Date & Time: ${formatDateTime(data.trainingDatetime)})` : '';
+    push('Training', data.trainingStatus + dt);
+  }
+
+  if (data.whatsappTicket)      push('WhatsApp Ticket', data.whatsappTicket);
+  if (data.followUpDateTime)    push('Next Follow-up', formatDateTime(data.followUpDateTime));
+  if (data.followUpNotes)       push('Follow-up Notes', data.followUpNotes);
+  if (data.standaloneNextFollowUp) push('Next Follow-up', formatDateTime(data.standaloneNextFollowUp));
+  if (data.freeComment?.trim()) push('Comment', data.freeComment.trim());
+
+  return lines.join('\n');
 }
 
+/* ─── Main ───────────────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', () => {
-  // Initialize theme toggle
-  initThemeToggle();
-  
-  const form = document.getElementById('ticket-form');
-  const outputText = document.getElementById('output-text');
-  const copyBtn = document.getElementById('copy-btn');
-  const clearBtn = document.getElementById('clear-btn');
-  const shippingStatusInput = document.getElementById('shipping-status');
-  const shippingSlaField = document.getElementById('shipping-sla-field');
-  const callStatusInput = document.getElementById('call-status');
-  const whatsappTicketField = document.getElementById('whatsapp-ticket-field');
-  const followUpField = document.getElementById('follow-up-field');
-  const followUpNotesField = document.getElementById('follow-up-notes-field');
-  const installationStatusInput = document.getElementById('installation-status');
-  const trainingStatusInput = document.getElementById('training-status');
-  const installationDatetimeField = document.getElementById('installation-datetime-field');
-  const trainingDatetimeField = document.getElementById('training-datetime-field');
-  const logs = [];
 
-  if (!form || !outputText || !copyBtn || !clearBtn) return;
+  /* DOM refs */
+  const form               = $('ticket-form');
 
-  function updateSlaVisibility() {
-    if (!shippingStatusInput || !shippingSlaField) return;
-    shippingSlaField.style.display =
-      shippingStatusInput.value === SHIPPING_NOT_YET_DELIVERED ? '' : 'none';
-  }
+  // Populate all time dropdowns first
+  buildTimeSelects();
+  const outputText         = $('output-text');
+  const copyBtn            = $('copy-btn');
+  const clearBtn           = $('clear-btn');
+  const workOrderTypeInput = $('work-order-type');
+  const callStatusInput    = $('call-status');
+  const shippingInput      = $('shipping-status');
+  const installInput       = $('installation-status');
+  const trainingInput      = $('training-status');
+  const showSections       = [...document.querySelectorAll('input[name="show-sections"]')];
 
-  function updateConditionalFields() {
-    if (!callStatusInput) return;
-    const callStatus = callStatusInput.value;
-    
-    // For "Not connected" status, show only WhatsApp ticket and hide other fields
-    if (callStatus === 'Not connected') {
-      if (whatsappTicketField) whatsappTicketField.style.display = '';
-      if (followUpField) followUpField.style.display = 'none';
-      if (followUpNotesField) followUpNotesField.style.display = 'none';
-      // Hide all form fields and make them not required
-      hideAndUnrequireAllFormFields();
-    } 
-    // For "Call back requested" status, show only Next follow-up and hide other fields
-    else if (callStatus === 'Call back requested') {
-      if (whatsappTicketField) whatsappTicketField.style.display = 'none';
-      if (followUpField) followUpField.style.display = 'none';
-      if (followUpNotesField) followUpNotesField.style.display = 'none';
-      // Hide all form fields and make them not required
-      hideAndUnrequireAllFormFields();
-      // Show only the Next follow-up field
-      const nextFollowUpInput = document.getElementById('standalone-next-follow-up');
-      if (nextFollowUpInput) nextFollowUpInput.parentElement.style.display = '';
-    }
-    // For "Dropped" status, show free comment and next follow-up
-    else if (callStatus === 'Dropped') {
-      if (whatsappTicketField) whatsappTicketField.style.display = 'none';
-      if (followUpField) followUpField.style.display = 'none';
-      if (followUpNotesField) followUpNotesField.style.display = 'none';
-      // Hide all form fields and make them not required
-      hideAndUnrequireAllFormFields();
-      // Show only the Next follow-up field and free comment will show below
-      const nextFollowUpInput = document.getElementById('standalone-next-follow-up');
-      if (nextFollowUpInput) nextFollowUpInput.parentElement.style.display = '';
-    }
-    else {
-      // Show all form fields again
-      showAndRequireAllFormFields();
-      // Show WhatsApp ticket field when "Contacted on WhatsApp" is selected
-      if (whatsappTicketField) {
-        whatsappTicketField.style.display = 
-          callStatus === 'Contacted on WhatsApp' ? '' : 'none';
-      }
-      
-      // Show follow-up date/time field for "Contacted on WhatsApp"
-      if (followUpField) {
-        followUpField.style.display = 
-          (callStatus === 'Contacted on WhatsApp') ? '' : 'none';
-      }
+  if (!form || !outputText || !copyBtn) return;
 
-      // Show follow-up notes field for "Contacted on WhatsApp"
-      if (followUpNotesField) {
-        followUpNotesField.style.display = 
-          (callStatus === 'Contacted on WhatsApp') ? '' : 'none';
-      }
-    }
-  }
+  /* ── Theme ─────────────────────────────────────────────────────── */
+  const html = document.documentElement;
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') { html.classList.add('light-mode'); syncThemeIcon(true); }
 
-  function hideAndUnrequireAllFormFields() {
-    const fieldsToHide = [
-      'activation-status',
-      'shipping-status',
-      'shipping-sla',
-      'menu-status',
-      'installation-status',
-      'training-status',
-      'standalone-next-follow-up'
-    ];
-    
-    fieldsToHide.forEach(fieldId => {
-      const field = document.getElementById(fieldId);
-      if (field) {
-        // Hide the parent label
-        field.parentElement.style.display = 'none';
-        // Remove required attribute from the field itself
-        field.removeAttribute('required');
-      }
-    });
-    
-    // Also hide and unrequire the parent fields
-    const parentFieldsToHide = ['shipping-sla-field', 'installation-datetime-field', 'training-datetime-field'];
-    parentFieldsToHide.forEach(fieldId => {
-      const field = document.getElementById(fieldId);
-      if (field) {
-        field.style.display = 'none';
-        const input = field.querySelector('input, select, textarea');
-        if (input) input.removeAttribute('required');
-      }
-    });
-  }
-
-  function showAndRequireAllFormFields() {
-    const fieldsToShow = [
-      'activation-status',
-      'shipping-status',
-      'menu-status',
-      'installation-status',
-      'training-status'
-    ];
-    
-    fieldsToShow.forEach(fieldId => {
-      const field = document.getElementById(fieldId);
-      if (field) {
-        field.parentElement.style.display = '';
-        // Restore required attribute
-        field.setAttribute('required', '');
-      }
-    });
-    
-    // Show standalone-next-follow-up but do NOT make it required
-    const nextFollowUp = document.getElementById('standalone-next-follow-up');
-    if (nextFollowUp) {
-      nextFollowUp.parentElement.style.display = '';
-      nextFollowUp.removeAttribute('required');
-    }
-  }
-
-  function updateInstallationDatetimeVisibility() {
-    if (!installationStatusInput || !installationDatetimeField) return;
-    const isScheduled = installationStatusInput.value === 'Scheduled';
-    installationDatetimeField.style.display = isScheduled ? 'flex' : 'none';
-  }
-
-  function updateTrainingDatetimeVisibility() {
-    if (!trainingStatusInput || !trainingDatetimeField) return;
-    const isScheduled = trainingStatusInput.value === 'Scheduled';
-    trainingDatetimeField.style.display = isScheduled ? 'flex' : 'none';
-  }
-
-  if (shippingStatusInput) {
-    shippingStatusInput.addEventListener('change', updateSlaVisibility);
-    updateSlaVisibility();
-  }
-
-  if (callStatusInput) {
-    callStatusInput.addEventListener('change', updateConditionalFields);
-    updateConditionalFields();
-  }
-
-  if (installationStatusInput) {
-    installationStatusInput.addEventListener('change', () => {
-      updateInstallationDatetimeVisibility();
-    });
-    updateInstallationDatetimeVisibility();
-  }
-
-  if (trainingStatusInput) {
-    trainingStatusInput.addEventListener('change', () => {
-      updateTrainingDatetimeVisibility();
-    });
-    updateTrainingDatetimeVisibility();
-  }
-
-  clearBtn.addEventListener('click', () => {
-    if (!outputText.value.trim()) {
-      form.reset();
-      updateSlaVisibility();
-      updateConditionalFields();
-      updateInstallationDatetimeVisibility();
-      updateTrainingDatetimeVisibility();
-      return;
-    }
-    if (!confirm('Clear all log entries? This cannot be undone.')) return;
-    form.reset();
-    updateSlaVisibility();
-    updateConditionalFields();
-    updateInstallationDatetimeVisibility();
-    updateTrainingDatetimeVisibility();
-    clearTickets(outputText, copyBtn, logs);
+  $('theme-toggle').addEventListener('click', () => {
+    const light = html.classList.toggle('light-mode');
+    localStorage.setItem('theme', light ? 'light' : 'dark');
+    syncThemeIcon(light);
   });
 
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
+  function syncThemeIcon(isLight) {
+    const icon = $('theme-toggle').querySelector('i');
+    icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+  }
 
-    const data = {
-      customerName: document.getElementById('customer-name').value.trim(),
-      customerPhone: document.getElementById('customer-phone').value.trim(),
-      callStatus: document.getElementById('call-status').value,
-      activationStatus: document.getElementById('activation-status').value,
-      shippingStatus: document.getElementById('shipping-status').value,
-      shippingSla: document.getElementById('shipping-sla').value,
-      menuStatus: document.getElementById('menu-status').value,
-      installationStatus: document.getElementById('installation-status').value,
-      installationDatetime: document.getElementById('installation-datetime').value,
-      trainingStatus: document.getElementById('training-status').value,
-      trainingDatetime: document.getElementById('training-datetime').value,
-      whatsappTicket: document.getElementById('whatsapp-ticket').value.trim(),
-      followUpDateTime: document.getElementById('follow-up-datetime').value,
-      followUpNotes: document.getElementById('follow-up-notes').value.trim(),
-      standaloneNextFollowUp: document.getElementById('standalone-next-follow-up').value.trim(),
-      freeComment: document.getElementById('free-comment').value,
-    };
+  /* ── Visibility helpers ────────────────────────────────────────── */
+  const STATUS_FIELD_MAP = {
+    activation:   'activation-status',
+    shipping:     'shipping-status',
+    menu:         'menu-status',
+    installation: 'installation-status',
+    training:     'training-status',
+  };
 
-    if (!data.customerName) {
-      alert('Please enter a customer name.');
-      return;
+
+
+  function updateInstallDatetime() {
+    const field = $('installation-datetime-field');
+    if (field) field.style.display = installInput?.value === 'Scheduled' ? 'flex' : 'none';
+  }
+
+  function updateTrainingDatetime() {
+    const field = $('training-datetime-field');
+    if (field) field.style.display = trainingInput?.value === 'Scheduled' ? 'flex' : 'none';
+  }
+
+
+
+  function showAllStatusFields() {
+    Object.values(STATUS_FIELD_MAP).forEach(id => setVisible(id, true));
+    // standalone next follow-up is optional — never required
+    const nfu = $('standalone-next-follow-up-date');
+    if (nfu) { nfu.closest('label')?.style && (nfu.closest('label').style.display = ''); }
+    updateSlaVisibility();
+    updateInstallDatetime();
+    updateTrainingDatetime();
+  }
+
+  function updateCallStatus() {
+    const status = callStatusInput.value;
+    const isWhatsApp   = status === 'Contacted on WhatsApp';
+    const isConnected  = status === 'Connected';
+    const isDropped    = status === 'Dropped';
+    const isCbReq      = status === 'Call back requested';
+    const isNotConn    = status === 'Not connected';
+
+    // WhatsApp ticket field
+    const wtf = $('whatsapp-ticket-field');
+    if (wtf) wtf.style.display = isWhatsApp ? '' : 'none';
+
+    // Follow-up date/notes — only for WhatsApp
+    const fuf  = $('follow-up-field');
+    const funf = $('follow-up-notes-field');
+    if (fuf)  fuf.style.display  = isWhatsApp ? '' : 'none';
+    if (funf) funf.style.display = isWhatsApp ? '' : 'none';
+
+    // Status fields — hide for non-productive calls
+    if (isConnected || isWhatsApp) {
+      updateWorkOrderVisibility(); // restore based on work order type
+    } else if (isDropped || isCbReq || isNotConn) {
+      hideAllStatusFields();
+      // Always show standalone follow-up for these statuses
+      const standaloneLabel = $('standalone-next-follow-up-date')?.closest('label');
+      if (standaloneLabel) standaloneLabel.style.display = '';
     }
-    if (!data.callStatus) {
-      alert('Please select a call status.');
-      return;
+  }
+
+  function updateWorkOrderVisibility() {
+    const isNewClient = workOrderTypeInput.value === 'new-client';
+    const followUpOptions = $('follow-up-options');
+    if (followUpOptions) followUpOptions.style.display = isNewClient ? 'none' : 'block';
+
+    if (isNewClient) {
+      showAllStatusFields();
+    } else {
+      // Show only checked sections
+      Object.entries(STATUS_FIELD_MAP).forEach(([section, fieldId]) => {
+        const checked = showSections.find(cb => cb.value === section)?.checked;
+        setVisible(fieldId, !!checked);
+      });
+      updateSlaVisibility();
+      updateInstallDatetime();
+      updateTrainingDatetime();
     }
-    if (data.customerPhone && !/^\d+$/.test(data.customerPhone)) {
-      alert('Customer phone must contain numbers only (no spaces or symbols).');
-      return;
-    }
-    if (
-      data.shippingStatus === SHIPPING_NOT_YET_DELIVERED &&
-      !data.shippingSla
-    ) {
-      alert('Please select a shipping SLA when shipping is "Not yet delivered".');
-      return;
+  }
+
+  /* ── Event listeners ───────────────────────────────────────────── */
+  shippingInput?.addEventListener('change', updateSlaVisibility);
+  installInput?.addEventListener('change', updateInstallDatetime);
+  trainingInput?.addEventListener('change', updateTrainingDatetime);
+  callStatusInput?.addEventListener('change', updateCallStatus);
+  workOrderTypeInput.addEventListener('change', updateWorkOrderVisibility);
+  showSections.forEach(cb => cb.addEventListener('change', updateWorkOrderVisibility));
+
+  // Initial state
+  updateWorkOrderVisibility();
+  updateCallStatus();
+
+  /* ── Form submission ───────────────────────────────────────────── */
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const name  = $('customer-name').value.trim();
+    const phone = $('customer-phone').value.trim();
+    const call  = $('call-status').value;
+
+    if (!name)  { alert('Please enter a customer name.'); return; }
+    if (!call)  { alert('Please select a call status.'); return; }
+    if (phone && !/^\d+$/.test(phone)) {
+      alert('Phone must contain numbers only (no spaces or symbols).'); return;
     }
 
-    const line = buildLogLine(data);
-    logs.length = 0;
-    logs.push(line);
-    outputText.value = line;
+    const data = { customerName: name, customerPhone: phone, callStatus: call };
+
+    // Collect visible status fields
+    Object.values(STATUS_FIELD_MAP).forEach(fieldId => {
+      const el = $(fieldId);
+      if (!el) return;
+      const wrapper = el.closest('label') || el.parentElement;
+      if (wrapper.style.display === 'none') return;
+      const key = fieldId.replace(/-([a-z])/g, (_, c) => c.toUpperCase()); // camelCase
+      data[key] = el.value;
+
+      if (fieldId === 'shipping-status' && el.value === SHIPPING_SLA_TRIGGER)
+        data.shippingSla = $('shipping-sla')?.value;
+      if (fieldId === 'installation-status' && el.value === 'Scheduled')
+        data.installationDatetime = combineDateTime('installation-date', 'installation-time');
+      if (fieldId === 'training-status' && el.value === 'Scheduled')
+        data.trainingDatetime = combineDateTime('training-date', 'training-time');
+    });
+
+    const wtField = $('whatsapp-ticket-field');
+    if (wtField?.style.display !== 'none')
+      data.whatsappTicket = $('whatsapp-ticket')?.value.trim();
+
+    const fufField = $('follow-up-field');
+    if (fufField?.style.display !== 'none')
+      data.followUpDateTime = combineDateTime('follow-up-date', 'follow-up-time');
+
+    const funfField = $('follow-up-notes-field');
+    if (funfField?.style.display !== 'none')
+      data.followUpNotes = $('follow-up-notes')?.value.trim();
+
+    data.standaloneNextFollowUp = combineDateTime('standalone-next-follow-up-date', 'standalone-next-follow-up-time');
+    data.freeComment = $('free-comment')?.value || '';
+
+    if (data.shippingStatus === SHIPPING_SLA_TRIGGER && !data.shippingSla) {
+      alert('Please select a shipping SLA for "Not yet delivered".'); return;
+    }
+
+    outputText.value = buildLogLine(data);
     copyBtn.disabled = false;
 
     form.reset();
+    updateWorkOrderVisibility();
+    updateCallStatus();
     updateSlaVisibility();
-    updateInstallationDatetimeVisibility();
-    updateTrainingDatetimeVisibility();
-    updateConditionalFields();
+    updateInstallDatetime();
+    updateTrainingDatetime();
   });
 
+  /* ── Clear ─────────────────────────────────────────────────────── */
+  clearBtn?.addEventListener('click', () => {
+    if (outputText.value.trim() && !confirm('Clear all log entries? This cannot be undone.')) return;
+    outputText.value = '';
+    copyBtn.disabled = true;
+    form.reset();
+    updateWorkOrderVisibility();
+    updateCallStatus();
+    updateSlaVisibility();
+    updateInstallDatetime();
+    updateTrainingDatetime();
+  });
+
+  /* ── Copy ──────────────────────────────────────────────────────── */
   copyBtn.addEventListener('click', () => {
     const text = outputText.value.trim();
     if (!text) return;
 
-    function showCopiedFeedback() {
-      copyBtn.textContent = COPY_BTN_SUCCESS_LABEL;
-      setTimeout(() => {
-        copyBtn.textContent = COPY_BTN_LABEL;
-      }, COPY_FEEDBACK_DURATION_MS);
-    }
+    const succeed = () => {
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => { copyBtn.textContent = 'Copy all'; }, 2000);
+    };
 
-    function fallbackCopy() {
-      outputText.focus();
-      outputText.select();
-      try {
-        if (document.execCommand('copy')) showCopiedFeedback();
-        else alert('Copy failed. Select the text in the box and copy manually (Ctrl+C).');
-      } catch (e) {
-        alert('Copy failed. Select the text in the box and copy manually (Ctrl+C).');
-      }
-    }
+    const fallback = () => {
+      outputText.focus(); outputText.select();
+      document.execCommand('copy') ? succeed()
+        : alert('Copy failed — please select the text and press Ctrl+C.');
+    };
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard
-        .writeText(text)
-        .then(showCopiedFeedback)
-        .catch(fallbackCopy);
-    } else {
-      fallbackCopy();
-    }
+    navigator.clipboard?.writeText(text).then(succeed).catch(fallback) ?? fallback();
   });
 });
-

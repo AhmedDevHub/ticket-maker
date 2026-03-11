@@ -4,196 +4,237 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Call Log Maker</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
+
+    <!-- Header -->
     <header class="app-header">
       <div class="header-left">
         <h1>Call Log Maker</h1>
-        <p>Create and print simple call log entries for Salesforce.</p>
+        <p>Create and copy call log entries for Salesforce.</p>
       </div>
-      <button id="theme-toggle" class="theme-toggle" title="Toggle dark/light mode">
+      <button id="theme-toggle" class="theme-toggle" title="Toggle dark / light mode" type="button">
         <i class="fas fa-moon"></i>
       </button>
     </header>
 
     <main class="app-main">
+
+      <!-- ── Form Panel ── -->
       <section class="panel panel-form">
-        <h2>Call details</h2>
-        <form id="ticket-form">
+        <h2>Call Details</h2>
+        <form id="ticket-form" novalidate>
+
+          <!-- Work Order Type -->
           <div class="form-grid">
             <label class="field field-required">
+              <span>Type of Work Order</span>
+              <select id="work-order-type">
+                <option value="new-client">New client</option>
+                <option value="follow-up">Follow up</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Follow-up section selector (shown for Follow Up orders) -->
+          <div id="follow-up-options" class="follow-up-panel" style="display:none;">
+            <h3>Sections to update</h3>
+            <div class="checkbox-grid">
+              <label class="checkbox-item"><input type="checkbox" name="show-sections" value="activation" /> Activation</label>
+              <label class="checkbox-item"><input type="checkbox" name="show-sections" value="shipping" /> Shipping</label>
+              <label class="checkbox-item"><input type="checkbox" name="show-sections" value="menu" /> Menu</label>
+              <label class="checkbox-item"><input type="checkbox" name="show-sections" value="installation" /> Installation</label>
+              <label class="checkbox-item"><input type="checkbox" name="show-sections" value="training" /> Training</label>
+            </div>
+          </div>
+
+          <!-- Core fields -->
+          <div class="form-grid">
+
+            <label class="field field-required">
               <span>Customer name</span>
-              <input type="text" id="customer-name" required placeholder="Customer name" />
+              <input type="text" id="customer-name" placeholder="Full name" autocomplete="off" />
             </label>
 
             <label class="field field-required">
               <span>Customer phone</span>
-              <input type="tel" id="customer-phone" required placeholder="e.g. 0501234567" inputmode="numeric" pattern="[0-9]+" title="Numbers only (no spaces or symbols)" />
+              <input type="tel" id="customer-phone" placeholder="e.g. 0501234567" inputmode="numeric" pattern="[0-9]+" />
             </label>
 
             <label class="field field-required">
               <span>Call status</span>
-              <select id="call-status" required>
+              <select id="call-status">
                 <option value="">Select status</option>
-                <option value="Dropped">Dropped</option>
                 <option value="Connected">Connected</option>
+                <option value="Dropped">Dropped</option>
                 <option value="Not connected">Not connected</option>
-                <option value="Call back requested">Ask for call back</option>
+                <option value="Call back requested">Call back requested</option>
                 <option value="Contacted on WhatsApp">Contacted on WhatsApp</option>
               </select>
             </label>
 
-            <label class="field" id="whatsapp-ticket-field" style="display: none;">
+            <!-- WhatsApp ticket — shown for "Contacted on WhatsApp" -->
+            <label class="field" id="whatsapp-ticket-field" style="display:none;">
               <span>WhatsApp ticket number</span>
-              <input type="text" id="whatsapp-ticket" placeholder="Enter ticket number (optional)" />
+              <input type="text" id="whatsapp-ticket" placeholder="Ticket number (optional)" />
             </label>
 
-            <label class="field" id="follow-up-field" style="display: none;">
-              <span>Next follow-up</span>
-              <input type="datetime-local" id="follow-up-datetime" />
+            <!-- Follow-up date/time — shown for "Contacted on WhatsApp" -->
+            <label class="field" id="follow-up-field" style="display:none;">
+              <span>Follow-up date &amp; time</span>
+              <div class="datetime-pair">
+                <input type="date" id="follow-up-date" />
+                <select id="follow-up-time" class="time-select"></select>
+              </div>
             </label>
 
-            <label class="field" id="follow-up-notes-field" style="display: none;">
+            <!-- Follow-up notes — shown for "Contacted on WhatsApp" -->
+            <label class="field" id="follow-up-notes-field" style="display:none;">
               <span>Follow-up notes</span>
-              <input type="text" id="follow-up-notes" placeholder="Enter follow-up details (optional)" />
+              <input type="text" id="follow-up-notes" placeholder="Optional notes" />
             </label>
 
-            <label class="field field-required">
+            <!-- Status fields (activation / shipping / menu / installation / training) -->
+            <label class="field field-required" id="activation-status-label">
               <span>Activation</span>
-              <select id="activation-status" required>
+              <select id="activation-status">
                 <option value="">Select</option>
                 <option value="Done">Done</option>
                 <option value="Not done">Not done</option>
-                <option value="No need">None</option> 
+                <option value="No need">None</option>
               </select>
             </label>
 
-            <label class="field field-required">
+            <label class="field field-required" id="shipping-status-label">
               <span>Shipping status</span>
-              <select id="shipping-status" required>
+              <select id="shipping-status">
                 <option value="">Select</option>
                 <option value="In Progress">In Progress</option>
-                <option value="With Samsa">With Samsa</option>
+                <option value="With Samsa SLA 1 WD">With Samsa SLA 1 WD</option>
+                <option value="With Samsa SLA 2 WD">With Samsa SLA 2 WD</option>
                 <option value="Delivered">Delivered</option>
-                <option value="Delayed by PS">Delayed by PS</option>
                 <option value="Pending by customer">Pending by customer</option>
-                <option value="Not started yet">Not started yet</option>
-                <option value="No line item/ No HW to be shipped.">No line item/ No HW to be shipped.</option>
-                <option value="With SMSA">With SMSA</option>
-                <option value="Not yet delivered">Not yet delivered</option>
+                <option value="Not started">Not started</option>
+                <option value="No line item.">No line item</option>
               </select>
             </label>
 
-            <label class="field field-required" id="shipping-sla-field">
-              <span>Shipping SLA</span>
-              <select id="shipping-sla">
-                <option value="">Select SLA</option>
-                <option value="1 WD">1 WD</option>
-                <option value="3 WD">3 WD</option>
-              </select>
-            </label>
-
-            <label class="field field-required">
+            <label class="field field-required" id="menu-status-label">
               <span>Menu</span>
-              <select id="menu-status" required>
+              <select id="menu-status">
                 <option value="">Select</option>
-                <option value="Not started yet">Not started yet</option>
-                <option value="Template is shared - to be filled by the client">Template is shared - to be filled by the client</option>
-                <option value="Template is received - to be uploaded">Template is received - to be uploaded</option>
-                <option value="Menu is Uploaded">Menu is Uploaded</option>
-                <option value="The client rejected - They will upload it">The client rejected - They will upload it</option>
+                <option value="Not started">Not started</option>
+                <option value="Template is shared - to be filled by the client">Template shared — awaiting client</option>
+                <option value="Template is received - to be uploaded">Template received — to be uploaded</option>
+                <option value="Menu is Uploaded">Menu uploaded</option>
                 <option value="Pending by customer">Pending by customer</option>
-                <option value="Completed by Customer">Completed by Customer</option>
-                <option value="Not Line Item">Not Line Item</option>
+                <option value="Completed by Customer">Completed by customer</option>
+                <option value="Not need">Not needed</option>
               </select>
             </label>
 
-            <label class="field field-required">
+            <label class="field field-required" id="installation-status-label">
               <span>Installation</span>
-              <select id="installation-status" required>
+              <select id="installation-status">
                 <option value="">Select</option>
-                <option value="Not started yet">Not started yet</option>
+                <option value="Not started">Not started</option>
                 <option value="Scheduled">Scheduled</option>
                 <option value="Pending by customer">Pending by customer</option>
-                <option value="Delayed by PS team - PS didn't show up.">Delayed by PS team - PS didn't show up.</option>
-                <option value="Completed by Customer">Completed by Customer</option>
-                <option value="Done - Completed">Done - Completed</option>
+                <option value="Done - Completed">Done — Completed</option>
                 <option value="Not needed">Not needed</option>
-                <option value="Not line item">Not line item</option>
               </select>
             </label>
 
-            <label class="field field-required">
+            <!-- Installation datetime — shown when "Scheduled" -->
+            <label class="field" id="installation-datetime-field" style="display:none;">
+              <span>Installation date &amp; time</span>
+              <div class="datetime-pair">
+                <input type="date" id="installation-date" />
+                <select id="installation-time" class="time-select"></select>
+              </div>
+              <small class="format-hint">Format: DD/MM/YYYY HH:MM</small>
+            </label>
+
+            <label class="field field-required" id="training-status-label">
               <span>Training</span>
-              <select id="training-status" required>
+              <select id="training-status">
                 <option value="">Select</option>
-                <option value="Not started yet">Not started yet</option>
+                <option value="Not started">Not started</option>
                 <option value="Scheduled">Scheduled</option>
-                <option value="Delayed by the training team - Trainer didn't show up.">Delayed by the training team - Trainer didn't show up.</option>
                 <option value="Pending by customer">Pending by customer</option>
-                <option value="Done - Completed">Done - Completed</option>
+                <option value="Done - Completed">Done — Completed</option>
                 <option value="Not needed">Not needed</option>
                 <option value="Not line item">Not line item</option>
               </select>
             </label>
 
-            <label class="field" id="installation-datetime-field" style="display: none;">
-              <span>Installation Date & Time</span>
-              <input type="datetime-local" id="installation-datetime" />
+            <!-- Training datetime — shown when "Scheduled" -->
+            <label class="field" id="training-datetime-field" style="display:none;">
+              <span>Training date &amp; time</span>
+              <div class="datetime-pair">
+                <input type="date" id="training-date" />
+                <select id="training-time" class="time-select"></select>
+              </div>
+              <small class="format-hint">Format: DD/MM/YYYY HH:MM</small>
             </label>
 
-            <label class="field" id="training-datetime-field" style="display: none;">
-              <span>Training Date & Time</span>
-              <input type="datetime-local" id="training-datetime" />
+            <!-- Standalone next follow-up (always visible) -->
+            <label class="field field-full">
+              <span>Next follow-up (optional)</span>
+              <div class="datetime-pair">
+                <input type="date" id="standalone-next-follow-up-date" />
+                <select id="standalone-next-follow-up-time" class="time-select"></select>
+              </div>
+              <small class="format-hint">Format: DD/MM/YYYY HH:MM</small>
             </label>
 
             <label class="field field-full">
-              <span>Next follow up (Optional)</span>
-              <input type="datetime-local" id="standalone-next-follow-up" />
+              <span>Free comment (optional)</span>
+              <textarea id="free-comment" rows="3" placeholder="Additional notes…"></textarea>
             </label>
-          </div>
 
-          <div class="form-grid">
-            <label class="field field-full">
-              <span>Free comment</span>
-              <textarea id="free-comment" rows="3" placeholder="Optional notes..."></textarea>
-            </label>
           </div>
-
-          <div class="form-grid">
 
           <div class="actions">
-            <button type="submit" class="btn primary">Add log entry</button>
-            <button type="button" id="clear-btn" class="btn ghost">Clear</button>
+            <button type="submit" class="btn primary">
+              <i class="fas fa-plus"></i> Add log entry
+            </button>
+            <button type="button" id="clear-btn" class="btn ghost">
+              <i class="fas fa-trash-can"></i> Clear
+            </button>
           </div>
+
         </form>
       </section>
 
+      <!-- ── Output Panel ── -->
       <section class="panel panel-tickets">
         <div class="panel-header">
-          <h2>Logs output</h2>
-          <button type="button" id="copy-btn" class="btn secondary" disabled>Copy all</button>
+          <h2>Log output</h2>
+          <button type="button" id="copy-btn" class="btn secondary" disabled>
+            <i class="fas fa-copy"></i> Copy all
+          </button>
         </div>
         <div class="output-wrapper">
           <textarea
             id="output-text"
             readonly
-            placeholder="Call log entries will appear here in text so you can copy them into Salesforce.">
-          </textarea>
+            placeholder="Your formatted call log will appear here — ready to paste into Salesforce."
+          ></textarea>
         </div>
       </section>
+
     </main>
 
     <footer class="app-footer">
-      <span>© by Ahmed Ashraf. All rights reserved.</span>
-      </footer>
-  </div>
+      <span>© Ahmed Ashraf. All rights reserved.</span>
+    </footer>
 
+  </div>
   <script src="main.js"></script>
 </body>
 </html>
-
